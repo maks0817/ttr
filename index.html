@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Для Іванки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Playfair+Display:ital,wght@0,600;1,500;1,600&display=swap&subset=cyrillic">
+<style>
+  /* Layout: one centred card per screen (intro, 2 questions, greeting with a central button); berry-dark night with one warm peach accent. */
+  :root {
+    --bg: #1d1226;
+    --bg-glow: #35193f;
+    --card: #2a1a36;
+    --line: #4a3157;
+    --fg: #f6ecf3;
+    --muted: #bba6c4;
+    --accent: #ffb48a;
+    --accent-ink: #2b1224;
+    --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+    --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image: radial-gradient(ellipse at 50% -10%, var(--bg-glow), transparent 60%);
+    background-repeat: no-repeat;
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.55;
+    padding-block: 28px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  main { width: 100%; max-width: 480px; }
+  .screen { display: none; flex-direction: column; gap: 22px; animation: rise .5s ease both; }
+  .screen.on { display: flex; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  .eyebrow { margin: 0; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  h1, h2 { font-family: var(--font-display); font-weight: 600; margin: 0; text-wrap: balance; line-height: 1.12; }
+  h1 { font-size: clamp(38px, 11vw, 58px); font-style: italic; color: var(--accent); }
+  h2 { font-size: clamp(28px, 8vw, 36px); }
+  p { margin: 0; }
+  .lead { color: var(--muted); max-width: 34ch; }
+
+  .progress { display: flex; gap: 8px; }
+  .progress i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+  .progress i.done { background: var(--accent); }
+
+  .options { display: grid; gap: 10px; }
+  .option {
+    font: inherit; color: var(--fg); text-align: left;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 15px 18px; cursor: pointer; min-width: 0;
+    transition: border-color .15s, transform .15s, background .15s;
+  }
+  .option:hover { border-color: var(--accent); }
+  .option:active { transform: scale(.985); }
+  .option[aria-pressed="true"] { border-color: var(--accent); background: #3a2247; }
+
+  .reaction { min-height: 3.1em; color: var(--accent); font-weight: 500; }
+
+  .btn {
+    font: inherit; font-weight: 700; cursor: pointer; border: 0; border-radius: 999px;
+    background: var(--accent); color: var(--accent-ink); padding: 15px 28px; align-self: flex-start;
+    transition: transform .15s, opacity .15s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn[disabled] { opacity: .35; cursor: not-allowed; transform: none; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+  /* Final screen: everything centred, button in the middle of the screen */
+  #s3 { align-items: center; text-align: center; gap: 36px; min-height: 70vh; justify-content: center; }
+  #s3 h1 { font-size: clamp(32px, 9vw, 50px); }
+  .btn.big { align-self: center; font-size: 19px; padding: 20px 40px; box-shadow: 0 0 0 0 rgba(255, 180, 138, .5); animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 180, 138, .5); } 70% { box-shadow: 0 0 0 18px rgba(255, 180, 138, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 180, 138, 0); } }
+
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+  @media (prefers-reduced-motion: reduce) { .screen, .btn.big { animation: none; } .btn, .option { transition: none; } }
+</style>
+</head>
+<body>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<main>
+  <section class="screen on" id="s0">
+    <h1>Привіт, Жинко!</h1>
+    <p class="lead">В мене для тебе сюрприз, але спочатку потрібно пройти тест.</p>
+    <button class="btn" id="start" type="button">Почати тест</button>
+  </section>
+
+  <section class="screen" id="s1">
+    <div class="progress" aria-hidden="true"><i class="done"></i><i></i></div>
+    <p class="eyebrow">Запитання 1 з 2</p>
+    <h2>Скільки ми років разом?</h2>
+    <div class="options" id="opts1">
+      <button class="option" type="button" aria-pressed="false" data-r="Час летить, а я щодня радий, що ти поруч.">1 рік</button>
+      <button class="option" type="button" aria-pressed="false" data-r="Час летить, а я щодня радий, що ти поруч.">2 роки</button>
+      <button class="option" type="button" aria-pressed="false" data-r="Час летить, а я щодня радий, що ти поруч.">3 роки</button>
+    </div>
+    <p class="reaction" id="react1"></p>
+    <button class="btn" id="next1" type="button" disabled>Далі</button>
+  </section>
+
+  <section class="screen" id="s2">
+    <div class="progress" aria-hidden="true"><i class="done"></i><i class="done"></i></div>
+    <p class="eyebrow">Запитання 2 з 2</p>
+    <h2>Хто найкраща дівчина в світі?</h2>
+    <div class="options" id="opts2">
+      <button class="option" type="button" aria-pressed="false" data-r="Правильно. Усі відповіді були вірні.">Ти</button>
+      <button class="option" type="button" aria-pressed="false" data-r="Правильно. Усі відповіді були вірні.">ТИ</button>
+      <button class="option" type="button" aria-pressed="false" data-r="Правильно. Усі відповіді були вірні.">Тільки ти</button>
+    </div>
+    <p class="reaction" id="react2"></p>
+    <button class="btn" id="next2" type="button" disabled>Відкрити сюрприз</button>
+  </section>
+
+  <section class="screen" id="s3">
+    <h1>Вітаю саму найкращу дівчинку на світі з днем народження</h1>
+    <button class="btn big" id="party" type="button">Натисни мене</button>
+  </section>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var screens = ['s0', 's1', 's2', 's3'];
+  function show(id) {
+    screens.forEach(function (s) { $(s).classList.toggle('on', s === id); });
+    window.scrollTo(0, 0);
+  }
+
+  function pick(listId, reactId, nextId) {
+    var opts = document.querySelectorAll('#' + listId + ' .option');
+    Array.prototype.forEach.call(opts, function (b) {
+      b.addEventListener('click', function () {
+        Array.prototype.forEach.call(opts, function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+        $(reactId).textContent = b.getAttribute('data-r');
+        $(nextId).disabled = false;
+      });
+    });
+  }
+
+  $('start').addEventListener('click', function () { show('s1'); });
+  pick('opts1', 'react1', 'next1');
+  pick('opts2', 'react2', 'next2');
+  $('next1').addEventListener('click', function () { show('s2'); });
+  $('next2').addEventListener('click', function () { show('s3'); });
+
+  // Confetti and falling cakes
+  var c = $('confetti'), ctx = c.getContext('2d'), raf = 0;
+  function party() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    cancelAnimationFrame(raf);
+    var dpr = window.devicePixelRatio || 1;
+    var W = c.width = window.innerWidth * dpr, H = c.height = window.innerHeight * dpr;
+    var colors = ['#ffb48a', '#f78fb3', '#ffd98a', '#c9a6ff', '#f6ecf3'];
+    var parts = [], cakes = [], i;
+
+    for (i = 0; i < 160; i++) {
+      parts.push({
+        x: W / 2 + (Math.random() - .5) * W * .2, y: H * .5,
+        vx: (Math.random() - .5) * 18 * dpr, vy: (-Math.random() * 15 - 3) * dpr,
+        s: (4 + Math.random() * 6) * dpr, r: Math.random() * 6.28, vr: (Math.random() - .5) * .3,
+        c: colors[i % colors.length]
+      });
+    }
+    for (i = 0; i < 28; i++) {
+      cakes.push({
+        x: Math.random() * W, y: -Math.random() * H * 1.1 - 40 * dpr,
+        vy: (2 + Math.random() * 3) * dpr, vx: (Math.random() - .5) * 1.2 * dpr,
+        size: (28 + Math.random() * 26) * dpr, r: (Math.random() - .5) * .6, vr: (Math.random() - .5) * .04
+      });
+    }
+
+    var frames = 0;
+    (function tick() {
+      ctx.clearRect(0, 0, W, H);
+      parts.forEach(function (p) {
+        p.vy += .35 * dpr; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.vx *= .99;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore();
+      });
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      cakes.forEach(function (k) {
+        k.x += k.vx; k.y += k.vy; k.r += k.vr;
+        ctx.save(); ctx.translate(k.x, k.y); ctx.rotate(k.r);
+        ctx.font = Math.round(k.size) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+        ctx.fillText('🎂', 0, 0); ctx.restore();
+      });
+      if (++frames < 420) raf = requestAnimationFrame(tick); else ctx.clearRect(0, 0, W, H);
+    })();
+  }
+  $('party').addEventListener('click', party);
+})();
+</script>
+</body>
+</html>
